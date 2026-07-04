@@ -1,0 +1,5 @@
+# robots.txt — YLION SIEF
+User-agent: *
+Allow: /
+
+Sitemap: https://ylion.net/sitemap.xml

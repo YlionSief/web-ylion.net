@@ -1,0 +1,81 @@
+# =====================================================================
+#  YLION SIEF — configuración de servidor (Apache)
+#  Todo va con <IfModule> para que, si a tu hosting le falta un módulo,
+#  se ignore en vez de dar error. Si tras subir vieras un HTTP 500,
+#  comenta la línea que el servidor indique (normalmente "Options").
+# =====================================================================
+
+# --- Página de inicio ---
+<IfModule mod_dir.c>
+  DirectoryIndex index.html
+</IfModule>
+
+# --- Sin listado de directorios ---
+Options -Indexes
+
+# --- Tipos MIME ---
+<IfModule mod_mime.c>
+  AddType image/webp .webp
+  AddType font/woff2 .woff2
+  AddType application/manifest+json .webmanifest
+</IfModule>
+
+# --- Forzar HTTPS (DESCOMENTAR cuando el dominio tenga certificado SSL
+#     activo; si no, rompería el acceso. Muchos hostings tienen un botón
+#     "Forzar HTTPS" que hace lo mismo). ---
+# <IfModule mod_rewrite.c>
+#   RewriteEngine On
+#   RewriteCond %{HTTPS} !=on
+#   RewriteCond %{HTTP:X-Forwarded-Proto} !https
+#   RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+# </IfModule>
+
+# --- Cabeceras de seguridad ---
+<IfModule mod_headers.c>
+  Header always set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "DENY"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set Permissions-Policy "geolocation=(), microphone=(), camera=(), payment=(), usb=(), accelerometer=(), gyroscope=(), magnetometer=(), interest-cohort=()"
+  Header always set Cross-Origin-Opener-Policy "same-origin"
+  # HSTS: se ignora sobre http; surte efecto al servir por https.
+  Header always set Strict-Transport-Security "max-age=15552000"
+</IfModule>
+
+# --- Compresión ---
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json image/svg+xml application/manifest+json
+</IfModule>
+
+# --- Caché de estáticos ---
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType text/css "access plus 7 days"
+  ExpiresByType application/javascript "access plus 7 days"
+  ExpiresByType font/woff2 "access plus 1 year"
+  ExpiresByType image/webp "access plus 30 days"
+  ExpiresByType image/png "access plus 30 days"
+  ExpiresByType image/svg+xml "access plus 30 days"
+  ExpiresByType image/x-icon "access plus 30 days"
+  ExpiresByType text/html "access plus 0 seconds"
+</IfModule>
+
+# --- Proteger archivos ocultos y sensibles ---
+<IfModule mod_authz_core.c>
+  <FilesMatch "^\.(?!well-known)">
+    Require all denied
+  </FilesMatch>
+  <FilesMatch "\.(json|md|log|bak|inc|ini|sh|sql)$">
+    Require all denied
+  </FilesMatch>
+</IfModule>
+<IfModule !mod_authz_core.c>
+  <FilesMatch "^\.(?!well-known)">
+    Order allow,deny
+    Deny from all
+  </FilesMatch>
+  <FilesMatch "\.(json|md|log|bak|inc|ini|sh|sql)$">
+    Order allow,deny
+    Deny from all
+  </FilesMatch>
+</IfModule>
